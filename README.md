@@ -1,4 +1,6 @@
-# Production-Ready Pre-Commit Hook System
+# pre-commit-hook-fe
+
+## Production-Ready Pre-Commit Hook System
 
 A comprehensive and configurable pre-commit hook system for maintaining code quality and consistency in your projects.
 
@@ -14,16 +16,106 @@ A comprehensive and configurable pre-commit hook system for maintaining code qua
 - **Highly Configurable** - Toggle features on/off via configuration file
 - **Performance Optimized** - Parallel processing with configurable workers
 
-## Installation
+## Quick Start - Using in Other Repositories
 
-1. Clone this repository or copy the files to your project
-2. Install dependencies:
+### Method 1: Automatic Installation (Recommended)
+
+From your target repository, run the installer:
+
+```bash
+# Navigate to your project repository
+cd /path/to/your/project
+
+# Run the installer
+node /path/to/pre-commit-hook-project/install.js
+```
+
+This will automatically:
+
+- ✅ Install all required dependencies
+- ✅ Copy configuration files
+- ✅ Set up Husky hooks
+- ✅ Configure package.json scripts
+- ✅ Make scripts executable
+
+### Method 2: Manual Installation
+
+If you prefer manual setup:
+
+```bash
+# 1. Copy configuration files to your project
+cp -r /path/to/pre-commit-hook-project/scripts ./
+cp /path/to/pre-commit-hook-project/.eslintrc.json ./
+cp /path/to/pre-commit-hook-project/.prettierrc.json ./
+cp /path/to/pre-commit-hook-project/.prettierignore ./
+cp /path/to/pre-commit-hook-project/.lintstagedrc.json ./
+cp /path/to/pre-commit-hook-project/tsconfig.json ./
+cp /path/to/pre-commit-hook-project/eslint.config.js ./
+
+# 2. Install dependencies
+npm install --save-dev eslint prettier typescript husky lint-staged \
+  @typescript-eslint/parser @typescript-eslint/eslint-plugin \
+  eslint-config-prettier eslint-plugin-prettier chalk@4.1.2
+
+# 3. Initialize Husky
+npx husky init
+
+# 4. Copy the pre-commit hook
+cp /path/to/pre-commit-hook-project/.husky/pre-commit .husky/pre-commit
+
+# 5. Make scripts executable
+chmod +x scripts/*.js .husky/pre-commit
+```
+
+### Method 3: NPM Package (For Teams)
+
+Convert to an NPM package for easy distribution:
+
+```bash
+# In pre-commit-hook-project directory
+npm publish --access public
+
+# In your target repository
+npm install --save-dev @yourorg/pre-commit-hooks
+npx @yourorg/pre-commit-hooks
+```
+
+## Troubleshooting
+
+### "npm test" Error
+
+If you see an error about `npm test` when committing, Husky has the default hook. Fix it:
+
+```bash
+# Quick fix
+node /path/to/pre-commit-hook-project/fix-husky.js
+
+# Or manually replace
+cp /path/to/pre-commit-hook-project/.husky/pre-commit .husky/pre-commit
+```
+
+### Hooks Not Running
+
+```bash
+# Ensure scripts are executable
+chmod +x .husky/pre-commit scripts/*.js
+
+# Reinstall Husky
+rm -rf .husky && npx husky init
+cp /path/to/pre-commit-hook-project/.husky/pre-commit .husky/pre-commit
+```
+
+## Installation for This Repository
+
+If you want to test this pre-commit system in its own repository:
+
+1. Install dependencies:
 
 ```bash
 npm install
 ```
 
-3. Initialize git hooks:
+2. Initialize git hooks:
 
 ```bash
 npx husky init
@@ -116,9 +208,55 @@ commitMessage: {
 }
 ```
 
+## Post-Installation Steps
+
+After installation in your repository:
+
+1. **Verify Installation**
+
+   ```bash
+   # Check if hooks are installed
+   ls -la .husky/pre-commit
+   ls -la scripts/
+   ```
+
+2. **Customize Configuration**
+   Edit `scripts/pre-commit-config.js` to match your project needs:
+
+   ```javascript
+   // Example: Disable TypeScript for JavaScript-only projects
+   typescript: {
+     enabled: false,
+   }
+
+   // Example: Set stricter file size limits
+   fileSize: {
+     limits: {
+       images: '1mb',
+       '.js': '500kb',
+     }
+   }
+   ```
+
+3. **Test the Hooks**
+
+   ```bash
+   # Make a test commit
+   git add .
+   git commit -m "test: verify pre-commit hooks"
+   ```
+
+4. **Add Custom Checks** (Optional)
+   ```javascript
+   // In scripts/pre-commit-config.js
+   customHooks: {
+     after: ['npm run test:unit', 'npm run check:dependencies'];
+   }
+   ```
+
 ## Usage
 
-Once configured, the pre-commit hooks will run automatically when you attempt to commit:
+Once installed and configured, the pre-commit hooks will run automatically when you attempt to commit:
 
 ```bash
 git add .
@@ -210,32 +348,64 @@ The system is optimized for performance with:
 - Timeout settings
 - Only processing staged files
 
-## Troubleshooting
+## Common Issues & Solutions
 
-### Hook Not Running
+### Issue: "npm test" Error
+
+**Problem:** Husky runs default `npm test` instead of custom hooks  
+**Solution:**
 
 ```bash
-# Reinstall husky
+# Quick fix - replace the hook
+node /path/to/pre-commit-hook-project/fix-husky.js
+```
+
+### Issue: Hooks Not Running
+
+**Problem:** Pre-commit hooks don't execute  
+**Solutions:**
+
+```bash
+# 1. Check file permissions
+chmod +x .husky/pre-commit scripts/*.js
+
+# 2. Reinstall Husky
+rm -rf .husky
 npx husky init
+cp /path/to/pre-commit-hook-project/.husky/pre-commit .husky/pre-commit
 chmod +x .husky/pre-commit
 ```
 
-### Permission Errors
+### Issue: ESLint v9 Compatibility
+
+**Problem:** ESLint requires new config format  
+**Solution:** The installer includes `eslint.config.js` for ESLint v9 compatibility
+
+### Issue: TypeScript Errors
+
+**Problem:** TypeScript checks fail  
+**Solutions:**
 
 ```bash
-chmod +x scripts/*.js
-chmod +x .husky/pre-commit
+# 1. Disable TypeScript for non-TS projects
+# In scripts/pre-commit-config.js:
+typescript: { enabled: false }
+
+# 2. Fix TypeScript configuration
+npm install -D typescript
+# Adjust tsconfig.json as needed
 ```
 
-### TypeScript Errors
+### Issue: Console Log Detection
 
-- Ensure `tsconfig.json` is properly configured
-- Check that TypeScript is installed: `npm install -D typescript`
+**Problem:** Legitimate console usage blocked  
+**Solution:** Add exceptions in `scripts/pre-commit-config.js`:
 
-### Console Log Detection Issues
-
-- Check `allowedPatterns` in configuration
-- Use ESLint disable comments for legitimate console usage
+```javascript
+consoleLogs: {
+  allowedPatterns: [/logger\./, /console\.error\(['"]Critical/];
+}
+```
 
 ## Best Practices
 
@@ -255,8 +425,36 @@ Feel free to customize this setup for your specific needs. Common modifications 
 - Custom linting rules
 - Integration with issue tracking systems
 
-## License
+## Quick Reference
 
-MIT# pre-commit-hook-fe
+### Essential Commands
 
-# pre-commit-hook-fe
+```bash
+# Install in another repo
+node /path/to/pre-commit-hook-project/install.js
+
+# Fix "npm test" error
+node /path/to/pre-commit-hook-project/fix-husky.js
+
+# Test hooks
+git add . && git commit -m "test: hooks"
+
+# Bypass hooks (emergency only)
+git commit --no-verify -m "emergency: bypass hooks"
+
+# Check configuration
+cat scripts/pre-commit-config.js
+```
+
+### Configuration Toggles
+
+```javascript
+// scripts/pre-commit-config.js
+{
+  eslint: { enabled: true },        // Toggle ESLint
+  prettier: { enabled: true },      // Toggle Prettier
+  typescript: { enabled: false },   // Toggle TypeScript
+  consoleLogs: { enabled: true },   // Toggle console detection
+  fileSize: { enabled: true },      // Toggle file size check
+}
+```

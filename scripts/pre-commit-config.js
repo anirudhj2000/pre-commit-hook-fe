@@ -78,12 +78,6 @@ module.exports = {
     showErrors: true,
   },
 
-  performance: {
-    parallel: true,
-    maxWorkers: 4,
-    timeout: 60000,
-  },
-
   customHooks: {
     before: [],
     after: [],
