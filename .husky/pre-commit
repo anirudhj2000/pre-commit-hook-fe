@@ -1,0 +1,76 @@
+#!/usr/bin/env sh
+
+# Load configuration
+node -e "
+const config = require('./scripts/pre-commit-config');
+const chalk = require('chalk');
+
+console.log(chalk.cyan('🚀 Running pre-commit hooks...'));
+console.log(chalk.gray('Configuration loaded from scripts/pre-commit-config.js'));
+"
+
+# Check branch naming
+node -e "
+const { execSync } = require('child_process');
+const chalk = require('chalk');
+const config = require('./scripts/pre-commit-config');
+
+if (config.checks.branchNaming.enabled) {
+  const branch = execSync('git branch --show-current').toString().trim();
+  const { pattern, allowedBranches, message } = config.checks.branchNaming;
+  
+  if (!allowedBranches.includes(branch) && !pattern.test(branch)) {
+    console.log(chalk.yellow('⚠️  ' + message));
+    console.log(chalk.gray('Current branch: ' + branch));
+    if (config.checks.branchNaming.blockCommit) {
+      process.exit(1);
+    }
+  }
+}
+"
+
+# Run TypeScript check if enabled
+node scripts/run-tsc.js
+
+# Run lint-staged
+npx lint-staged
+
+# Check commit message format
+if [ "$SKIP_COMMIT_MSG_CHECK" != "true" ]; then
+  node -e "
+  const config = require('./scripts/pre-commit-config');
+  const chalk = require('chalk');
+  
+  if (config.checks.commitMessage.enabled) {
+    console.log(chalk.blue('💬 Commit message format check enabled'));
+    console.log(chalk.gray('Pattern: ' + config.checks.commitMessage.pattern));
+    if (config.checks.commitMessage.examples && config.checks.commitMessage.examples.length > 0) {
+      console.log(chalk.gray('Examples:'));
+      config.checks.commitMessage.examples.forEach(ex => {
+        console.log(chalk.gray('  - ' + ex));
+      });
+    }
+  }
+  "
+fi
+
+# Run custom hooks
+node -e "
+const { execSync } = require('child_process');
+const chalk = require('chalk');
+const config = require('./scripts/pre-commit-config');
+
+if (config.customHooks.after && config.customHooks.after.length > 0) {
+  console.log(chalk.blue('🔧 Running custom hooks...'));
+  config.customHooks.after.forEach(hook => {
+    try {
+      execSync(hook, { stdio: 'inherit' });
+    } catch (error) {
+      console.log(chalk.red('Custom hook failed: ' + hook));
+      process.exit(1);
+    }
+  });
+}
+"
+
+echo "✅ Pre-commit checks completed successfully!"

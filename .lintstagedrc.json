@@ -1,0 +1,6 @@
+{
+  "*.{js,jsx,ts,tsx}": ["eslint --fix", "prettier --write", "node scripts/check-console-logs.js"],
+  "*.{json,md,yml,yaml}": ["prettier --write"],
+  "*.{css,scss,sass,less}": ["prettier --write"],
+  "*.{png,jpg,jpeg,gif,svg,webp}": ["node scripts/check-file-size.js"]
+}
