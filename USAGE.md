@@ -1,5 +1,32 @@
 # How to Use This Pre-commit Hook System in Another Repository
 
+## Troubleshooting: "npm test" Error
+
+If you're getting an error about `npm test` when committing, it means Husky created a default pre-commit hook. Here are two ways to fix it:
+
+### Quick Fix (if already installed):
+
+```bash
+# From your repository where you're getting the error:
+node /path/to/pre-commit-hook-project/fix-husky.js
+```
+
+### Or manually replace the hook:
+
+```bash
+# Copy the correct pre-commit hook
+cp /path/to/pre-commit-hook-project/.husky/pre-commit .husky/pre-commit
+chmod +x .husky/pre-commit
+```
+
+### Prevention: Use the installer
+
+The installer script now handles this automatically:
+
+```bash
+node /path/to/pre-commit-hook-project/install.js
+```
+
 ## Quick Setup Methods
 
 ### Method 1: Using the Install Script (Easiest)

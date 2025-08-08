@@ -83,15 +83,30 @@ scriptsToCopy.forEach((script) => {
   }
 });
 
-// Copy Husky pre-commit hook
+// Initialize Husky first
 console.log(chalk.blue('\n🪝 Setting up Husky...'));
+try {
+  execSync('npx husky init', { stdio: 'ignore' });
+  console.log(chalk.green('  ✓ Husky initialized'));
+} catch {
+  console.log(chalk.yellow('  ⚠️  Husky already initialized'));
+}
+
+// Copy Husky pre-commit hook (force overwrite)
 const huskySource = path.join(sourceDir, '.husky', 'pre-commit');
 const huskyTarget = path.join(targetDir, '.husky', 'pre-commit');
 
 try {
+  // Ensure .husky directory exists
+  const huskyDir = path.join(targetDir, '.husky');
+  if (!fs.existsSync(huskyDir)) {
+    fs.mkdirSync(huskyDir, { recursive: true });
+  }
+
+  // Force copy the pre-commit hook
   fs.copyFileSync(huskySource, huskyTarget);
   fs.chmodSync(huskyTarget, '755');
-  console.log(chalk.green('  ✓ Copied .husky/pre-commit'));
+  console.log(chalk.green('  ✓ Installed custom pre-commit hook'));
 } catch (error) {
   console.log(chalk.red(`  ✗ Failed to setup Husky: ${error.message}`));
 }
@@ -143,14 +158,7 @@ if (fs.existsSync(packageJsonPath)) {
     console.log(chalk.gray('  This may take a few moments...\n'));
     execSync('npm install', { stdio: 'inherit' });
 
-    // Initialize Husky
-    console.log(chalk.blue('\n🔧 Initializing Husky...'));
-    try {
-      execSync('npx husky init', { stdio: 'ignore' });
-      console.log(chalk.green('  ✓ Husky initialized'));
-    } catch {
-      console.log(chalk.yellow('  ⚠️  Husky already initialized'));
-    }
+    // Husky will be initialized earlier, before copying hooks
   } catch (error) {
     console.log(chalk.red(`  ✗ Failed to update package.json: ${error.message}`));
   }
